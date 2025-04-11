@@ -27,6 +27,7 @@ async def analyse(input: AnalyseInput):
 
     try:
         score = data["lighthouseResult"]["categories"]["performance"]["score"]
+        print(f"Performance score for {input.url}: {score * 100}")
         return {
             "status": "ok",
             "url": input.url,
