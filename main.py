@@ -25,6 +25,9 @@ async def analyse(input: AnalyseInput):
         response = await client.get(api_url, params=params, timeout=20.0)
         data = response.json()
 
+    print(f"PageSpeed raw data for {input.url}:")
+    print(data)
+
     try:
         score = data["lighthouseResult"]["categories"]["performance"]["score"]
         print(f"Performance score for {input.url}: {score * 100}")
