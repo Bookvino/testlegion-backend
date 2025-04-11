@@ -22,7 +22,7 @@ async def analyse(input: AnalyseInput):
     }
 
     async with httpx.AsyncClient() as client:
-        response = await client.get(api_url, params=params)
+        response = await client.get(api_url, params=params, timeout=20.0)
         data = response.json()
 
     try:
