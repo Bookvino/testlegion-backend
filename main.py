@@ -29,15 +29,15 @@ async def analyse(input: AnalyseInput):
     print(data)
 
     # Udtræk forbedringsforslag fra audits
-audits = data.get("lighthouseResult", {}).get("audits", {})
+    audits = data.get("lighthouseResult", {}).get("audits", {})
 
-print("\n🔍 Forslag til forbedringer:\n")
+    print("\n🔍 Forslag til forbedringer:\n")
 
-for audit_id, audit in audits.items():
-    score = audit.get("score")
-    title = audit.get("title")
-    description = audit.get("description")
-    display_value = audit.get("displayValue")
+    for audit_id, audit in audits.items():
+        score = audit.get("score")
+        title = audit.get("title")
+        description = audit.get("description")
+        display_value = audit.get("displayValue")
 
     # Kun vis hvis der er noget at forbedre
     if score is not None and score < 1:
