@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
 from app.models.schemas import AnalyseInput
 from app.services.pagespeed import run_pagespeed_analysis
 
@@ -8,7 +9,7 @@ app = FastAPI()
 # 🔐 CORS setup
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Du kan senere ændre dette til fx ["https://dit-domæne.dk"]
+    allow_origins=["https://testlegion.com", "http://localhost:8000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
