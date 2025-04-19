@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.models.schemas import AnalyseInput
@@ -16,6 +16,6 @@ app.add_middleware(
 )
 
 @app.post("/analyse")
-async def analyse(input: AnalyseInput):
-    return await run_pagespeed_analysis(input.url)
-
+async def analyse(input: AnalyseInput, background_tasks: BackgroundTasks):
+    background_tasks.add_task(run_pagespeed_analysis, input.url)
+    return {"message": "Analysen er startet i baggrunden"}

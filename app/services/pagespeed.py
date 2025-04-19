@@ -8,7 +8,9 @@ load_dotenv()
 async def fetch_single_analysis(url: str, strategy: str) -> dict:
     api_key = os.getenv("PAGESPEED_API_KEY")
     if not api_key:
-        return {"error": "Missing API key"}
+        error_msg = f"❌ Missing API key for {strategy} analysis"
+        print(error_msg)
+        return {"error": error_msg}
 
     api_url = "https://www.googleapis.com/pagespeedonline/v5/runPagespeed"
     params = {
@@ -20,14 +22,15 @@ async def fetch_single_analysis(url: str, strategy: str) -> dict:
     try:
         async with httpx.AsyncClient() as client:
             response = await client.get(api_url, params=params, timeout=60.0)
+            response.raise_for_status()  # Fanger fx 4xx og 5xx
             data = response.json()
 
-        print(f"✅ PageSpeed data for {url} ({strategy}):\n{data}")
+        print(f"✅ PageSpeed data for {url} ({strategy}) hentet")
 
         score = data["lighthouseResult"]["categories"]["performance"]["score"]
-        improvements = []
         audits = data.get("lighthouseResult", {}).get("audits", {})
 
+        improvements = []
         for audit in audits.values():
             audit_score = audit.get("score")
             if audit_score is not None and audit_score < 1:
@@ -44,13 +47,21 @@ async def fetch_single_analysis(url: str, strategy: str) -> dict:
         }
 
     except ReadTimeout:
-        return {"error": f"Timeout on {strategy} strategy"}
+        error_msg = f"❌ Timeout on {strategy} strategy"
+        print(error_msg)
+        return {"error": error_msg}
+    except httpx.HTTPStatusError as http_error:
+        error_msg = f"❌ HTTP error on {strategy}: {http_error.response.status_code} – {http_error.response.text}"
+        print(error_msg)
+        return {"error": error_msg}
     except Exception as e:
-        print(f"❌ Error during {strategy} analysis: {e}")
-        return {"error": f"Unexpected error on {strategy}", "details": str(e)}
+        error_msg = f"❌ Unexpected error on {strategy}: {e}"
+        print(error_msg)
+        return {"error": error_msg, "details": str(e)}
 
 async def run_pagespeed_analysis(url: str) -> dict:
-    # I fremtiden kan vi her tjekke brugertype og kun kalde én strategi
+    print(f"\n🔍 Starting analysis for {url}\n")
+
     desktop_result = await fetch_single_analysis(url, "desktop")
     mobile_result = await fetch_single_analysis(url, "mobile")
 
@@ -62,5 +73,6 @@ async def run_pagespeed_analysis(url: str) -> dict:
             "mobile": mobile_result
         }
     }
+
 
 
