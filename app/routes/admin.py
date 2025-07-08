@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, Depends, Form, BackgroundTasks
+from fastapi import APIRouter, Request, Depends, Form, status, BackgroundTasks
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
@@ -71,6 +71,20 @@ async def reanalyse(
 ):
     run_pagespeed_analysis(url, db)
     return RedirectResponse(url="/admin/dashboard", status_code=303)
+
+# Run new PageSpeed analysis from dashboard form
+@router.post("/run-analysis", name="admin.run_analysis")
+async def run_analysis(
+    request: Request,
+    url: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    await run_pagespeed_analysis(url, db=db)
+
+    return RedirectResponse(
+        url=request.url_for("show_dashboard"),
+        status_code=status.HTTP_303_SEE_OTHER
+    )
 
 # Log out route
 @router.get("/logout")

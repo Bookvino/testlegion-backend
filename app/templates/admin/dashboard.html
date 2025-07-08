@@ -8,7 +8,19 @@
 
                     <h1 class="h3 mb-3"><strong>Analytics</strong> Dashboard</h1>
 
-                   {% if analysis %}
+                    <!-- URL analysis form -->
+                    {% if not analyses %}
+                    <!-- Show this only if the user has no analyses -->
+                    <form method="post" action="{{ url_for('admin.run_analysis') }}">
+                        <div class="input-group mb-3">
+                        <input type="url" name="url" class="form-control" placeholder="Indtast din URL..." required>
+                        <button class="btn btn-primary" type="submit">Kør analyse</button>
+                        </div>
+                    </form>
+                    {% endif %}
+
+                   
+                    {% if analysis %}
                     <form method="post" action="{{ url_for('admin.trigger_reanalysis') }}">
                         <input type="hidden" name="url" value="{{ analysis.url }}">
                         <button type="submit" class="btn btn-primary mb-3">
