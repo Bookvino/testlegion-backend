@@ -1,6 +1,18 @@
+# Python
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
-.env
+
+# Virtual environment
 venv/
+
+# Environment variables
+.env
+
+# VS Code config (valgfri)
+.vscode/
+
+# OS-filer
+.DS_Store
+Thumbs.db

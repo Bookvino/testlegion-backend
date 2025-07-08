@@ -1,83 +1,91 @@
 import os
 import logging
-import httpx
-from httpx import ReadTimeout
+import requests
 from dotenv import load_dotenv
+from sqlalchemy.orm import Session
+from app.database import SessionLocal
+from app.models.pagespeed_analysis import PageSpeedAnalysis, PageSpeedAudit
 
 load_dotenv()
+logging.basicConfig(level=logging.INFO)
 
-async def fetch_single_analysis(url: str, strategy: str) -> dict:
-    api_key = os.getenv("PAGESPEED_API_KEY")
-    if not api_key:
-        error_msg = f"❌ Missing API key for {strategy} analysis"
-        logging.error(error_msg)
-        return {"error": error_msg}
+def run_pagespeed_analysis(url: str, db: Session = SessionLocal()):
+    logging.info(f"\n🔍 STARTER analyse for {url}")
+    strategies = ["desktop", "mobile"]
 
-    api_url = "https://www.googleapis.com/pagespeedonline/v5/runPagespeed"
-    params = {
-        "url": url,
-        "key": api_key,
-        "strategy": strategy
-    }
+    for strategy in strategies:
+        api_url = "https://www.googleapis.com/pagespeedonline/v5/runPagespeed"
+        params = {
+            "url": url,
+            "strategy": strategy,
+            "key": os.getenv("PAGESPEED_API_KEY")
+        }
+        headers = {"Accept": "application/json"}
+        response = requests.get(api_url, params=params, headers=headers)
 
-    try:
-        logging.info(f"📡 Kalder PageSpeed API for {strategy}")
-        async with httpx.AsyncClient() as client:
-            response = await client.get(api_url, params=params, timeout=60.0)
-            response.raise_for_status()
-            data = response.json()
+        if response.status_code != 200:
+            logging.error(f"❌ Fejl ved {strategy}-analyse for {url}")
+            continue
 
-        logging.info(f"✅ PageSpeed data for {url} ({strategy}) hentet")
+        data = response.json()
+        score = data["lighthouseResult"]["categories"]["performance"]["score"] * 100
 
-        score = data["lighthouseResult"]["categories"]["performance"]["score"]
-        audits = data.get("lighthouseResult", {}).get("audits", {})
+        # Gem hovedanalysen
+        analysis = PageSpeedAnalysis(
+            url=url,
+            strategy=strategy,
+            performance_score=score
+        )
+        db.add(analysis)
+        db.commit()
+        db.refresh(analysis)
 
-        improvements = []
-        for audit in audits.values():
+        # Hent audits og gem dem
+        audits_data = data["lighthouseResult"].get("audits", {})
+        for audit in audits_data.values():
             audit_score = audit.get("score")
             if audit_score is not None and audit_score < 1:
-                improvements.append({
-                    "title": audit.get("title"),
-                    "description": audit.get("description"),
-                    "display_value": audit.get("displayValue")
-                })
-
-        return {
-            "strategy": strategy,
-            "performance_score": score * 100,
-            "improvements": improvements
-        }
-
-    except ReadTimeout:
-        error_msg = f"❌ Timeout på {strategy}-analyse"
-        logging.error(error_msg)
-        return {"error": error_msg}
-    except httpx.HTTPStatusError as http_error:
-        error_msg = f"❌ HTTP-fejl på {strategy}: {http_error.response.status_code} – {http_error.response.text}"
-        logging.error(error_msg)
-        return {"error": error_msg}
-    except Exception as e:
-        error_msg = f"❌ Uventet fejl på {strategy}: {e}"
-        logging.exception(error_msg)
-        return {"error": error_msg, "details": str(e)}
-
-async def run_pagespeed_analysis(url: str) -> dict:
-    logging.info(f"\n🔍 STARTER analyse for {url}\n")
-
-    desktop_result = await fetch_single_analysis(url, "desktop")
-    mobile_result = await fetch_single_analysis(url, "mobile")
+                db.add(PageSpeedAudit(
+                    analysis_id=analysis.id,
+                    title=audit.get("title"),
+                    description=audit.get("description"),
+                    display_value=audit.get("displayValue"),
+                    audit_score=audit_score
+                ))
+        db.commit()
 
     logging.info(f"🎉 Analyse afsluttet for {url}")
 
-    return {
-        "status": "ok",
-        "url": url,
-        "results": {
-            "desktop": desktop_result,
-            "mobile": mobile_result
-        }
-    }
+def get_latest_analysis_with_scores(db: Session):
+    # Hent nyeste desktop og mobil analyse for samme URL (hvis muligt)
+    desktop = (
+        db.query(PageSpeedAnalysis)
+        .filter(PageSpeedAnalysis.strategy == "desktop")
+        .order_by(PageSpeedAnalysis.created_at.desc())
+        .first()
+    )
+    mobile = (
+        db.query(PageSpeedAnalysis)
+        .filter(PageSpeedAnalysis.strategy == "mobile")
+        .order_by(PageSpeedAnalysis.created_at.desc())
+        .first()
+    )
 
+    # Brug den nyeste som hovedanalyse (typisk desktop), og returnér scores separat
+    main_analysis = desktop or mobile
+    desktop_score = desktop.performance_score if desktop else None
+    mobile_score = mobile.performance_score if mobile else None
 
+    return main_analysis, desktop_score, mobile_score
 
+# Run reanalysis using latest URL in the database
+def run_reanalysis(db: Session):
+    latest = db.query(PageSpeedAnalysis).order_by(PageSpeedAnalysis.created_at.desc()).first()
+    if not latest:
+        logging.warning("⚠️ Ingen tidligere analyse fundet – kan ikke køre reanalyse.")
+        return False
 
+    url = latest.url
+    logging.info(f"♻️ Starter reanalyse for seneste URL: {url}")
+    run_pagespeed_analysis(url, db)
+    return True

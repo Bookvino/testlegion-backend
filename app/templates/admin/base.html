@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta name="description" content="Admin dashboard" />
+    <meta name="author" content="TestLegion" />
+    <title>{% block title %}Dashboard{% endblock %}</title>
+
+    <link rel="shortcut icon" href="{{ url_for('admin_static', path='images/favicon.svg') }}" type="image/svg+xml" />
+    
+    <!-- AdminKit CSS -->
+    <link rel="stylesheet" href="{{ url_for('admin_static', path='css/app.css') }}" />
+  </head>
+  <body>
+    <div class="wrapper">
+      {% include "partials/sidebar.html" %}
+      <div class="main">
+        {% include "partials/header.html" %}
+
+        <main class="content p-5">
+          <div class="container-fluid p-0">
+            {% block content %}{% endblock %}
+          </div>
+        </main>
+
+        {% include "partials/footer.html" %}
+      </div>
+    </div>
+
+    <!-- AdminKit JS -->
+    <script src="{{ url_for('admin_static', path='js/app.js') }}"></script>
+  </body>
+</html>
+
