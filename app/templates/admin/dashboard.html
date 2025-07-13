@@ -4,30 +4,46 @@
 
 {% block content %}
 
-		
+					<h1 class="h3 mb-3"><strong>Analytics</strong> Dashboard</h1>
 
-                    <h1 class="h3 mb-3"><strong>Analytics</strong> Dashboard</h1>
+					<!-- ✅ Flash message: new analysis started -->
+					{% if request.query_params.get("message") == "analyse_startet" %}
+					<div class="alert alert-info alert-dismissible fade show" role="alert">
+						Your analysis has started. Results will appear below once ready.
+						<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+					</div>
+					{% endif %}
 
-                    <!-- URL analysis form -->
-                    {% if not analyses %}
-                    <!-- Show this only if the user has no analyses -->
-                    <form method="post" action="{{ url_for('admin.run_analysis') }}">
-                        <div class="input-group mb-3">
-                        <input type="url" name="url" class="form-control" placeholder="Indtast din URL..." required>
-                        <button class="btn btn-primary" type="submit">Start analyse</button>
-                        </div>
-                    </form>
-                    {% endif %}
+					<!-- ✅ Flash message: reanalysis started -->
+					{% if request.query_params.get("message") == "reanalyse_startet" %}
+					<div class="alert alert-warning alert-dismissible fade show" role="alert">
+						Reanalysis has started. Results will refresh below shortly.
+						<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+					</div>
+					{% endif %}
 
-                   
-                    {% if analysis %}
-                    <form method="post" action="{{ url_for('admin.trigger_reanalysis') }}">
-                        <input type="hidden" name="url" value="{{ analysis.url }}">
-                        <button type="submit" class="btn btn-primary mb-3">
-                            Kør ny analyse af {{ analysis.url }}
-                        </button>
-                    </form>
-                    {% endif %}
+					<!-- ✅ New analysis form (only if user has no analyses yet) -->
+					{% if not analyses %}
+					<form method="post" action="{{ url_for('admin.run_analysis') }}">
+						<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+						<div class="input-group mb-3">
+							<input type="url" name="url" class="form-control" placeholder="Enter your URL..." required>
+							<button class="btn btn-primary" type="submit">Start Analysis</button>
+						</div>
+					</form>
+					{% endif %}
+
+					<!-- ✅ Reanalysis form (if user already has one analysis shown) -->
+					{% if analysis %}
+					<form method="post" action="{{ url_for('admin.trigger_reanalysis') }}">
+						<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+						<input type="hidden" name="url" value="{{ analysis.url }}">
+						<button type="submit" class="btn btn-primary mb-3">
+							Run new analysis for {{ analysis.url }}
+						</button>
+					</form>
+					{% endif %}
+
 
                                         
                     {% if analysis %}

@@ -15,12 +15,6 @@
   </div>
 </section>
 
-{% if signup_success %}
-  <div class="alert alert-success text-center" role="alert">
-    You have successfully signed up. Please log in.
-  </div>
-{% endif %}
-
 <section class="ud-login">
   <div class="container">
     <div class="row">
@@ -30,13 +24,20 @@
             <img src="{{ url_for('public_static', path='images/logo/logo-2.svg') }}" alt="logo" />
           </div>
 
+          <!-- ✅ Flash message after successful signup -->
+          {% if request.query_params.get('message') == 'signup_success' %}
+            <div class="alert alert-success text-center mt-3" role="alert">
+              You have successfully signed up. Please log in.
+            </div>
+          {% endif %}
+
           {% if error %}
-            <div class="alert alert-danger" role="alert">
+            <div class="alert alert-danger mt-3" role="alert">
               {{ error }}
             </div>
           {% endif %}
 
-          <form class="ud-login-form" method="post" action="/login" >
+          <form class="ud-login-form mt-4" method="post" action="/login" >
             <div class="ud-form-group">
               <input
                 type="email"
@@ -53,6 +54,9 @@
                 required
               />
             </div>
+
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
             <div class="ud-form-group">
               <button type="submit" class="ud-main-btn w-100">Login</button>
             </div>
@@ -77,3 +81,4 @@
   </div>
 </section>
 {% endblock %}
+

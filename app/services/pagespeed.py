@@ -9,7 +9,7 @@ from app.models.pagespeed_analysis import PageSpeedAnalysis, PageSpeedAudit
 load_dotenv()
 logging.basicConfig(level=logging.INFO)
 
-def run_pagespeed_analysis(url: str, db: Session = SessionLocal()):
+def run_pagespeed_analysis(url: str, db: Session = SessionLocal(), user_id: int = None):
     logging.info(f"\n🔍 STARTER analyse for {url}")
     strategies = ["desktop", "mobile"]
 
@@ -34,7 +34,8 @@ def run_pagespeed_analysis(url: str, db: Session = SessionLocal()):
         analysis = PageSpeedAnalysis(
             url=url,
             strategy=strategy,
-            performance_score=score
+            performance_score=score,
+            user_id=user_id
         )
         db.add(analysis)
         db.commit()
@@ -54,7 +55,7 @@ def run_pagespeed_analysis(url: str, db: Session = SessionLocal()):
                 ))
         db.commit()
 
-    logging.info(f"🎉 Analyse afsluttet for {url}")
+    logging.info(f"🎉 Analysis finished for {url}")
 
 def get_latest_analysis_with_scores(db: Session):
     # Hent nyeste desktop og mobil analyse for samme URL (hvis muligt)

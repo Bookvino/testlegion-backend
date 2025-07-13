@@ -20,7 +20,11 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # Sæt database-url dynamisk fra .env
-db_url = os.getenv("DATABASE_URL")
+if os.getenv("RENDER") == "true":
+    db_url = os.getenv("DATABASE_URL")
+else:
+    db_url = os.getenv("LOCAL_DATABASE_URL")
+
 if not db_url:
     raise Exception("⚠️ DATABASE_URL ikke fundet i .env-filen")
 config.set_main_option("sqlalchemy.url", db_url)

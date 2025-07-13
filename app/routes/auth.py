@@ -1,81 +1,89 @@
-# app/routes/auth.py
-from fastapi import APIRouter, Request, Form, Depends, HTTPException
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi import APIRouter, Request, Form, Depends, status
+from fastapi.responses import RedirectResponse, HTMLResponse
 from sqlalchemy.orm import Session
+from starlette.responses import Response
 
-from app.dependencies import get_db
-from app.models.schemas import UserCreate, UserOut
+from app.dependencies.common import get_db
+from app.dependencies.common import templates_public as templates
 from app.models.user import User
-from app.services.user import create_user
-from app.services.auth import authenticate_user
-from app.utils.security import hash_password
-from app.dependencies import templates_public
+from app.utils.security import verify_password
+from app.utils.csrf import validate_csrf_token, generate_csrf_token  # ✅ Import both
 
-router = APIRouter(tags=["auth"])
+router = APIRouter()
+
+# -----------------------------------------------------------
+# ✅ Login form (GET)
+# -----------------------------------------------------------
+@router.get("/login", response_class=HTMLResponse, name="show_login")
+def login_get(request: Request):
+    # ✅ Save CSRF token in session so the template can access it
+    request.session["csrf_token"] = generate_csrf_token(request)
+
+    return templates.TemplateResponse("login.html", {
+        "request": request,
+    })
 
 
-# Render signup form
-@router.get("/signup", response_class=HTMLResponse)
-async def show_signup(request: Request):
-    return templates_public.TemplateResponse("signup.html", {"request": request})
-
-
-# Handle signup form submission (HTML version)
-@router.post("/signup-form", response_class=HTMLResponse)
-async def signup_form(
+# -----------------------------------------------------------
+# ✅ Login handler (POST)
+# -----------------------------------------------------------
+@router.post("/login")
+def login_post(
     request: Request,
+    response: Response,
     email: str = Form(...),
     password: str = Form(...),
+    csrf_token: str = Form(...),
     db: Session = Depends(get_db)
 ):
+    validate_csrf_token(request, csrf_token)
+
+    user = db.query(User).filter(User.email == email).first()
+    if not user or not verify_password(password, user.hashed_password):
+        return templates.TemplateResponse("login.html", {
+            "request": request,
+            "error": "Forkert e-mail eller adgangskode"
+        })
+
+    request.session["user_id"] = user.id
+    return RedirectResponse("/admin/dashboard", status_code=status.HTTP_303_SEE_OTHER)
+
+# -----------------------------------------------------------
+# ✅ Signup form (GET)
+# -----------------------------------------------------------
+@router.get("/signup", response_class=HTMLResponse, name="show_signup")
+def signup_get(request: Request):
+    # ✅ Save CSRF token in session for template use
+    request.session["csrf_token"] = generate_csrf_token(request)
+    return templates.TemplateResponse("signup.html", {
+        "request": request
+    })
+
+# -----------------------------------------------------------
+# ✅ Signup handler (POST)
+# -----------------------------------------------------------
+@router.post("/signup")
+def signup_post(
+    request: Request,
+    response: Response,
+    email: str = Form(...),
+    password: str = Form(...),
+    csrf_token: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    validate_csrf_token(request, csrf_token)
+
     existing_user = db.query(User).filter(User.email == email).first()
     if existing_user:
-        return templates_public.TemplateResponse(
-            "signup.html",
-            {"request": request, "error": "Email already registered"}
-        )
+        return templates.TemplateResponse("signup.html", {
+            "request": request,
+            "error": "E-mailen er allerede registreret"
+        })
 
-    # Use schema to create user
-    hashed = hash_password(password)
-    user_create = UserCreate(email=email, password=password)
-    create_user(db, user_create)
+    new_user = User(email=email)
+    new_user.set_password(password)
+    db.add(new_user)
+    db.commit()
 
-    # Redirect to login page on success
-    return RedirectResponse(url="/login?signup=success", status_code=303)
+    return RedirectResponse(url="/login?message=signup_success", status_code=status.HTTP_303_SEE_OTHER)
 
-
-# Render login form
-@router.get("/login", response_class=HTMLResponse)
-async def show_login(request: Request):
-    # Check if the user just signed up successfully
-    signup_success = request.query_params.get("signup") == "success"
-    return templates_public.TemplateResponse("login.html", {"request": request, "signup_success": signup_success})
-
-
-# Handle login form submission, authenticate user, and start session
-@router.post("/login", response_class=HTMLResponse)
-async def login_post(
-    request: Request,
-    email: str = Form(...),
-    password: str = Form(...),
-    db: Session = Depends(get_db)
-):
-    user = authenticate_user(db, email, password)
-    if not user:
-        return templates_public.TemplateResponse(
-            "login.html",
-            {"request": request, "error": "Invalid email or password"}
-        )
-
-    # Store user ID in session
-    request.session["user_id"] = user.id
-    return RedirectResponse(url="/admin/dashboard", status_code=303)
-
-
-# JSON-based API signup (used by API clients, not form)
-@router.post("/signup", response_model=UserOut)
-def signup(user: UserCreate, db: Session = Depends(get_db)):
-    existing_user = db.query(User).filter(User.email == user.email).first()
-    if existing_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
-    return create_user(db, user)

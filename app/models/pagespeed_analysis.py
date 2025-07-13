@@ -12,6 +12,9 @@ class PageSpeedAnalysis(Base):
     strategy = Column(String, nullable=False)  # 'mobile' eller 'desktop'
     performance_score = Column(Float)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user = relationship("User", back_populates="analyses")
+
     
     audits = relationship("PageSpeedAudit", back_populates="analysis", cascade="all, delete-orphan")
 

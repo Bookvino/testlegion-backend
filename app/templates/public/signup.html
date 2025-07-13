@@ -30,17 +30,25 @@
             </div>
           {% endif %}
 
-          <form class="ud-login-form" method="post" action="/signup-form">
+        <form class="ud-login-form" method="post" action="/signup">
+            
             <div class="ud-form-group">
-              <input type="email" name="email" placeholder="Email address" required />
+                <input type="email" name="email" placeholder="Email address" required />
             </div>
+            
             <div class="ud-form-group">
-              <input type="password" name="password" placeholder="Password" required />
+                <input type="password" name="password" placeholder="Password" required />
             </div>
+            
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
             <div class="ud-form-group">
-              <button type="submit" class="ud-main-btn w-100">Sign Up</button>
+                <button type="submit" class="ud-main-btn w-100">Sign Up</button>
             </div>
-          </form>
+
+        </form>
+
+
 
           <p class="signup-option">
             Already have an account?
