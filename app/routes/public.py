@@ -23,3 +23,8 @@ def privacy_policy(request: Request):
 @router.get("/terms-and-conditions", response_class=HTMLResponse, name="terms_and_conditions")
 def terms_and_conditions(request: Request):
     return templates.TemplateResponse("terms_and_conditions.html", {"request": request})
+
+
+
+
+

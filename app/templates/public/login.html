@@ -24,18 +24,31 @@
             <img src="{{ url_for('public_static', path='images/logo/logo-2.svg') }}" alt="logo" />
           </div>
 
-          <!-- ✅ Flash message after successful signup -->
-          {% if request.query_params.get('message') == 'signup_success' %}
-            <div class="alert alert-success text-center mt-3" role="alert">
-              You have successfully signed up. Please log in.
-            </div>
-          {% endif %}
+          <!-- ✅ Flash message after success redirects -->
+{% if request.query_params.get('message') == 'signup_success' %}
+  <div class="alert alert-success text-center mt-3" role="alert">
+    You have successfully signed up. Please log in.
+  </div>
+{% elif request.query_params.get('message') == 'resetlink_sent' %}
+  <div class="alert alert-success text-center mt-3" role="alert">
+    We’ve sent you a link to reset your password – check your email.
+  </div>
+{% elif request.query_params.get('message') == 'password_reset_success' %}
+  <div class="alert alert-success text-center mt-3" role="alert">
+    Your password has been successfully reset. Please log in.
+  </div>
+{% elif request.query_params.get('message') == 'email_confirmed' %}
+  <div class="alert alert-success text-center mt-3" role="alert">
+    Your email has been confirmed. You can now log in.
+  </div>
+{% endif %}
 
-          {% if error %}
-            <div class="alert alert-danger mt-3" role="alert">
-              {{ error }}
-            </div>
-          {% endif %}
+{% if error %}
+  <div class="alert alert-danger mt-3" role="alert">
+    {{ error }}
+  </div>
+{% endif %}
+
 
           <form class="ud-login-form mt-4" method="post" action="/login" >
             <div class="ud-form-group">
@@ -71,7 +84,7 @@
             </ul>
           </div>
 
-          <a class="forget-pass" href="javascript:void(0)">Forget Password?</a>
+          <a class="forget-pass" href="{{ url_for('forgot_password_get') }}">Forgot your password?</a>
           <p class="signup-option">
             Not a member yet? <a href="/signup">Sign Up</a>
           </p>

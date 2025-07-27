@@ -1,6 +1,6 @@
 # app/models/user.py
 
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, Boolean
 from sqlalchemy.orm import relationship
 from app.utils.security import hash_password
 from app.database import Base
@@ -11,6 +11,7 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)  # ✅ Matches services/user.py
+    is_verified = Column(Boolean, default=False, nullable=False)
     analyses = relationship("PageSpeedAnalysis", back_populates="user")
 
     def set_password(self, plain_password: str):
