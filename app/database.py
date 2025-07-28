@@ -6,13 +6,10 @@ import os
 
 load_dotenv()
 
-if os.getenv("RENDER") == "true":
-    # Production on Render
-    DATABASE_URL = os.getenv("DATABASE_URL")
-else:
-    # Local development - still read from .env
-    DATABASE_URL = os.getenv("LOCAL_DATABASE_URL")
+DATABASE_URL = os.getenv("DATABASE_URL")
 
+if not DATABASE_URL:
+    raise ValueError("DATABASE_URL is not set. Please define it in your environment or .env file.")
 
 # Opret forbindelse til PostgreSQL
 engine = create_engine(DATABASE_URL)
