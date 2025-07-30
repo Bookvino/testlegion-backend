@@ -141,7 +141,7 @@ def login_post(
 # -----------------------------------------------------------
 # ✅ Signup form (GET)
 # -----------------------------------------------------------
-@router.get("/signup", response_class=HTMLResponse, name="show_signup")
+@router.get("/signup", response_class=HTMLResponse, name="signup_get")
 def signup_get(request: Request):
     # ✅ Save CSRF token in session for template use
     request.session["csrf_token"] = generate_csrf_token(request)
