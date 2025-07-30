@@ -58,7 +58,7 @@ def reset_password_form(request: Request, token: str):
 # -----------------------------------------------------------
 # ✅ Password reset (POST)
 # -----------------------------------------------------------
-@router.post("/reset-password")
+@router.post("/reset-password", name="reset_password_post")
 async def reset_password_post(
     request: Request,
     password: str = Form(...),
@@ -106,7 +106,7 @@ async def reset_password_post(
 # -----------------------------------------------------------
 # ✅ Login handler (POST)
 # -----------------------------------------------------------
-@router.post("/login")
+@router.post("/login", name="signup_post")
 def login_post(
     request: Request,
     response: Response,

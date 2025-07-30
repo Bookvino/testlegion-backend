@@ -30,7 +30,7 @@
             </div>
           {% endif %}
 
-        <form class="ud-login-form" method="post" action="/signup">
+        <form class="ud-login-form" method="post" action="{{ url_for('signup_post') }}">
             
             <div class="ud-form-group">
                 <input type="email" name="email" placeholder="Email address" required />
@@ -52,7 +52,7 @@
 
           <p class="signup-option">
             Already have an account?
-            <a href="/login"> Sign In </a>
+            <a href="{{ url_for('show_login') }}"> Sign In </a>
           </p>
         </div>
       </div>
