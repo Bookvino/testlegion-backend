@@ -33,10 +33,6 @@ app = FastAPI()
 # ✅ Middleware
 # -----------------------------------------------------------
 
-# Ensure correct handling of HTTPS behind proxy (e.g. Railway)
-if os.getenv("ENV") == "production":
-    app.add_middleware(HTTPSRedirectMiddleware)
-
 # Session support
 app.add_middleware(SessionMiddleware, secret_key=os.getenv("SECRET_KEY", "mysecret"))
 
