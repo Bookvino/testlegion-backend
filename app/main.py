@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
+from starlette.middleware.httpsredirect import HTTPSRedirectMiddleware
 from sqlalchemy.orm import Session
 
 # Local imports
@@ -27,9 +28,14 @@ logging.basicConfig(level=logging.INFO)
 # -----------------------------------------------------------
 app = FastAPI()
 
+
 # -----------------------------------------------------------
 # ✅ Middleware
 # -----------------------------------------------------------
+
+# Ensure correct handling of HTTPS behind proxy (e.g. Railway)
+if os.getenv("ENV") == "production":
+    app.add_middleware(HTTPSRedirectMiddleware)
 
 # Session support
 app.add_middleware(SessionMiddleware, secret_key=os.getenv("SECRET_KEY", "mysecret"))
