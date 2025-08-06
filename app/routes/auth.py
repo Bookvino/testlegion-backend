@@ -152,7 +152,7 @@ def signup_get(request: Request):
 # -----------------------------------------------------------
 # ✅ Signup handler (POST)
 # -----------------------------------------------------------
-@router.post("/signup")
+@router.post("/signup", name="signup_post")
 async def signup_post(
     request: Request,
     response: Response,
@@ -168,7 +168,8 @@ async def signup_post(
         return templates.TemplateResponse("signup.html", {
             "request": request,
             "error": "E-mail is already registered"
-        })
+        }
+    )
 
     new_user = User(email=email)
     new_user.set_password(password)

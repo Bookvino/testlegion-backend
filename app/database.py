@@ -1,22 +1,29 @@
+import os
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
-import os
 
+# Load environment variables from .env
 load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+# Select correct database URL based on environment flag
+if os.getenv("DIGITALOCEAN") == "true":
+    DATABASE_URL = os.getenv("DATABASE_URL")
+else:
+    DATABASE_URL = os.getenv("LOCAL_DATABASE_URL")
 
+# Raise an error if no database URL is set
 if not DATABASE_URL:
-    raise ValueError("DATABASE_URL is not set. Please define it in your environment or .env file.")
+    raise ValueError("No database URL found. Please check your .env file.")
 
-# Opret forbindelse til PostgreSQL
+# Create connection to PostgreSQL
 engine = create_engine(DATABASE_URL)
 
-# SessionLocal = bruges til at oprette db-sessioner i dine endpoints
+# SessionLocal = used to create DB sessions in endpoints
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# Base = fælles baseklasse for alle dine modeller (fx User)
+# Base = shared base class for all models
 Base = declarative_base()
+
 
